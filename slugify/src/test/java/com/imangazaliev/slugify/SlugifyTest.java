@@ -51,7 +51,7 @@ public class SlugifyTest {
         slugs.put(Slugify.Language.LATVIAN, new Slug("", ""));
         slugs.put(Slugify.Language.NORWEGIAN, new Slug("", ""));
         slugs.put(Slugify.Language.POLISH, new Slug("", ""));
-        slugs.put(Slugify.Language.RUSSIAN, new Slug("Разработка мобильных приложений под Android", "razrabotka-mobilnih-prilozheniy-pod-android"));
+        slugs.put(Slugify.Language.RUSSIAN, new Slug("Разработка мобильных приложений под Android", "razrabotka-mobilnyh-prilozheniy-pod-android"));
         slugs.put(Slugify.Language.SWEDISH, new Slug("", ""));
         slugs.put(Slugify.Language.TURKISH, new Slug("Android Uygulama Geliştirme", "android-uygulama-gelistirme"));
         slugs.put(Slugify.Language.UKRAINIAN, new Slug("Розробка мобільних додатків під Android", "rozrobka-mobilnih-dodatkiv-pid-android"));
