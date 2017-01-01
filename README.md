@@ -1,4 +1,4 @@
-# Scripto
+# Slugify
 [ ![Download](https://api.bintray.com/packages/imangazaliev/maven/slugify/images/download.svg) ](https://bintray.com/imangazaliev/maven/slugify/_latestVersion)
 
 Converts a string to a slug
