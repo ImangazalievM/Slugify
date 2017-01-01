@@ -3,14 +3,12 @@ package com.imangazaliev.slugify;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 
 import static org.junit.Assert.*;
 
-public class SlugifyTest {
+public class SlugifyTest extends BaseTest {
 
     private class Slug {
 
@@ -34,9 +32,8 @@ public class SlugifyTest {
     private static final HashMap<Slugify.Language, Slug> slugs = new HashMap<>();
 
     @Before
-    public void setup() throws UnsupportedEncodingException {
-        slugs.put(Slugify.Language.DEFAULT, new Slug("Android Development for Beginners", "android-development-for-beginners"));
-        slugs.put(Slugify.Language.ARABIC, new Slug("العَرَبِيَّة", "alaarabiya"));
+    public void onSetup() throws UnsupportedEncodingException {
+        slugs.put(Slugify.Language.ARABIC, new Slug("العَرَبِيَّة", "alarabiya"));
         slugs.put(Slugify.Language.AUSTRIAN, new Slug("", ""));
         slugs.put(Slugify.Language.AZERBAIJANI, new Slug("", ""));
         slugs.put(Slugify.Language.BULGARIAN, new Slug("", ""));
@@ -61,10 +58,10 @@ public class SlugifyTest {
     @Test
     public void testSlugify() throws Exception {
         Slugify slugify = new Slugify();
-        Slugify.Language[] languages = Slugify.Language.values();
-        for (Slugify.Language language:languages) {
-            slugify.clearCustomReplacements();
-            slugify.addLanguageReplacements(language);
+        assertEquals("android-development-for-beginners", slugify.slugify("Android Development for Beginners")); //default rules
+
+        for (Slugify.Language language:slugs.keySet()) {
+            slugify.setLanguageRuleSet(language);
             Slug slug = slugs.get(language);
             assertEquals(slug.getSlug(), slugify.slugify(slug.getOriginal()));
         }

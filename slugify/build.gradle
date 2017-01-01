@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.novoda.bintray-release'
 
-final LIBRARY_VERSION_NAME = '1.0.0'
-final LIBRARY_VERSION_CODE = 1
+final LIBRARY_VERSION_NAME = '1.0.1'
+final LIBRARY_VERSION_CODE = 2
 
 android {
     compileSdkVersion 25
@@ -26,12 +26,20 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    compile 'com.android.support:appcompat-v7:25.0.1'
-    testCompile 'junit:junit:4.12'
+    final HAMCREST_VERSION = '1.3'
+    final MOCKITO_VERSION = '1.10.19'
+    final JUNIT_VERSION = '4.12'
+
+    //unit-тестирование
+    testCompile "junit:junit:$JUNIT_VERSION"
+    testCompile "org.hamcrest:hamcrest-core:$HAMCREST_VERSION"
+    testCompile "org.hamcrest:hamcrest-library:$HAMCREST_VERSION"
+    testCompile "org.hamcrest:hamcrest-integration:$HAMCREST_VERSION"
+    testCompile "org.mockito:mockito-core:$MOCKITO_VERSION"
+    testCompile('org.robolectric:robolectric:3.0') {
+        exclude group: 'commons-logging', module: 'commons-logging'
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    }
 }
 
 // это блок будет обработан плагином bintray-release

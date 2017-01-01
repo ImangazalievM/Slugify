@@ -1,17 +1,22 @@
 package com.imangazaliev.slugify;
 
-import java.io.FileInputStream;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.text.Normalizer;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 public class Slugify {
 
     public enum Language {
-        DEFAULT("default"),
         ARABIC("arabic"),
         AUSTRIAN("austrian"),
         AZERBAIJANI("azerbaijani"),
@@ -42,19 +47,15 @@ public class Slugify {
         public String getLangFileName() {
             return mLangFileName;
         }
-
-        public String getLangFilePath() {
-            return "rules/" + mLangFileName + ".properties";
-        }
     }
-
-    private final static Properties replacements = new Properties();
 
     private final static String EMPTY = "";
     private final static Pattern PATTERN_NORMALIZE_NON_ASCII = Pattern.compile("[^\\p{ASCII}]+");
     private final static Pattern PATTERN_NORMALIZE_SEPARATOR = Pattern.compile("[\\W\\s+]+");
     private final static Pattern PATTERN_NORMALIZE_TRIM_DASH = Pattern.compile("^-|-$");
 
+    private final static Map<String, String> replacements = new LinkedHashMap<>();
+    private final Map<Language, Map<String, String>> languageRuleSets = new LinkedHashMap<>();
     private final Map<String, String> customReplacements = new HashMap<>();
 
     private boolean underscoreSeparator = false;
@@ -62,12 +63,26 @@ public class Slugify {
 
     public Slugify() {
         if (replacements.isEmpty()) {
-            replacements.putAll(loadLangReplacements(Language.DEFAULT));
+            replacements.putAll(loadReplacementRuleSet("default"));
         }
     }
 
-    public Slugify addLanguageReplacements(Language language) {
-        customReplacements.putAll((Map) loadLangReplacements(language));
+    public Slugify setLanguageRuleSet(Language language) {
+        languageRuleSets.clear();
+        if (!languageRuleSets.containsKey(language)) {
+            Map languageRuleset = loadReplacementRuleSet(language.getLangFileName());
+            languageRuleSets.put(language, languageRuleset);
+        }
+        return this;
+    }
+
+    public Slugify setLanguageRuleSets(Language... languages) {
+        for (Language language : languages) {
+            if (!languageRuleSets.containsKey(language)) {
+                Map languageRuleset = loadReplacementRuleSet(language.getLangFileName());
+                languageRuleSets.put(language, languageRuleset);
+            }
+        }
         return this;
     }
 
@@ -79,10 +94,6 @@ public class Slugify {
     public Slugify withCustomReplacements(final Map<String, String> customReplacements) {
         this.customReplacements.putAll(customReplacements);
         return this;
-    }
-
-    public void clearCustomReplacements() {
-        customReplacements.clear();
     }
 
     public Slugify withUnderscoreSeparator(final boolean underscoreSeparator) {
@@ -103,6 +114,7 @@ public class Slugify {
 
         input = input.trim();
         input = customReplacements(input);
+        input = languageReplacements(input);
         input = builtInReplacements(input);
         input = normalize(input);
 
@@ -118,33 +130,50 @@ public class Slugify {
     }
 
     private String customReplacements(String input) {
-        Map<String, String> customReplacements = getCustomReplacements();
-        for (Entry<String, String> entry : customReplacements.entrySet()) {
-            input = input.replace(entry.getKey(), entry.getValue());
+        for (Entry<String, String> replacementEntry : customReplacements.entrySet()) {
+            input = input.replace(replacementEntry.getKey(), replacementEntry.getValue());
         }
 
+        return input;
+    }
+
+    private String languageReplacements(String input) {
+        for (Entry<Language, Map<String, String>> languageEntry : languageRuleSets.entrySet()) {
+            for (Entry<String, String> replacementEntry : languageEntry.getValue().entrySet()) {
+                input = input.replace(replacementEntry.getKey(), replacementEntry.getValue());
+            }
+        }
         return input;
     }
 
     private String builtInReplacements(String input) {
-        for (Entry<Object, Object> e : replacements.entrySet()) {
-            input = input.replace(e.getKey().toString(), e.getValue().toString());
+        for (Entry<String, String> e : replacements.entrySet()) {
+            input = input.replace(e.getKey(), e.getValue());
         }
-
         return input;
     }
 
-    private Properties loadLangReplacements(Language language) {
-        String resourceFileName = language.getLangFilePath();
+    private Map<String, String> loadReplacementRuleSet(String langFileName) {
+        String resourceFilePath = "/rules/" + langFileName + ".json";
         try {
-            Properties langReplacements = new Properties();
-            ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-            replacements.load(classloader.getResourceAsStream(resourceFileName));
+            Map<String, String> langReplacements = new LinkedHashMap<>();
+            InputStream stream = Slugify.class.getResourceAsStream(resourceFilePath);
+            String langRuleSetJson = new Scanner(stream, Charset.defaultCharset().name()).useDelimiter("\\A").next();
+
+            JSONObject langRuleSet = new JSONObject(langRuleSetJson);
+            Iterator<String> iter = langRuleSet.keys();
+            while (iter.hasNext()) {
+                String key = iter.next();
+                String value = langRuleSet.getString(key);
+                langReplacements.put(key, value);
+            }
+
             return langReplacements;
         } catch (Exception e) {
-            throw new RuntimeException(String.format("Resource '%s' not loaded!", resourceFileName), e);
+            throw new RuntimeException(String.format("Resource '%s' not loaded!", resourceFilePath), e);
         }
     }
+
 
     private static boolean isNullOrBlank(final String string) {
         return string == null || string.trim().isEmpty();
